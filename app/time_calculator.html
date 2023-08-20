@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Calculator</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            font-size: 18px;
+        }
+
+        #myTextarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        #message {
+            color: #007BFF;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Time Calculator</h1>
+    <div class="container">
+        <form>
+            <label for="requiredHours">Required Hours</label>
+            <input type="number" name="requiredHours" id="requiredHours" value="8" min="0" max="24">
+            <br>
+            <br>
+            <label for="myTextarea">Type or Copy Entry and Exit Timestamps:</label>
+            <br>
+            <textarea id="myTextarea" rows="8" cols="50" placeholder="9:41:33 AM
+1:02:20 PM
+2:21:35 PM"></textarea>
+            <p id="message1"></p>
+            <p id="message2"></p>
+        </form>
+    </div>
+    
+    <script>
+        let requiredHours = 8;
+        const textarea = document.getElementById('myTextarea');
+        const requiredHoursInput = document.getElementById('requiredHours');
+        const message1 = document.getElementById('message1');
+        const message2 = document.getElementById('message2');
+        
+        textarea.addEventListener('input', changeHandler);
+        textarea.addEventListener('copy', changeHandler);
+        requiredHoursInput.addEventListener("change", e => {
+            requiredHours = Number(e.target.value);
+            changeHandler();
+        })
+
+        function changeHandler() {
+            messages = timeCalculator(textarea.value);
+            message1.textContent = messages[0];
+            message2.textContent = messages[1];
+        }
+
+        function msToTime(duration) {
+            let seconds = Math.floor((duration / 1000) % 60),
+                minutes = Math.floor((duration / (1000 * 60)) % 60),
+                hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+            hours = (hours < 10) ? "0" + hours : hours;
+            minutes = (minutes < 10) ? "0" + minutes : minutes;
+            seconds = (seconds < 10) ? "0" + seconds : seconds;
+            return hours + ":" + minutes + ":" + seconds;
+        }
+
+        function timeCalculator(timestamps) {
+            const now = new Date();
+            now.setFullYear(2022, 0, 1);
+            now.setMilliseconds(0);
+            const fullTime = requiredHours * 3600 * 1000; // hours in milliseconds
+            const regexPattern = /(0[1-9]|[1-9]|1[0-2]):[0-5][0-9]:[0-5][0-9] (AM|PM)/g;
+            const timestampArray = timestamps.match(regexPattern).map(ts => {
+                return new Date(`2022-01-01 ${ts}`);
+            });
+            now.setFullYear(2022);
+            now.setDate(1);
+            now.setMonth(0);
+            timestampArray.push(now);
+
+            let totalTimestamp = 0;
+
+            for (let i = 0; i < timestampArray.length - 1; i += 2) {
+                totalTimestamp += timestampArray[i + 1] - timestampArray[i];
+            }
+
+            if (totalTimestamp > fullTime) {
+                return [
+                    `Time: ${msToTime(totalTimestamp)}`,
+                    `Required ${requiredHours} hours completed`,
+                ]
+            } else {
+                const timeLeft = fullTime - totalTimestamp;
+                const leavingTime = new Date(timestampArray[timestampArray.length - 1].getTime() + timeLeft);
+                return [
+                    `Time Left: ${msToTime(timeLeft)}`,
+                    `Timeout: ${leavingTime.toTimeString().substring(0, 8)}`,
+                ]
+            }
+        }
+    </script>
+</body>
+</html>
